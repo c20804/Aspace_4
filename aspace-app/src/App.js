@@ -8,6 +8,7 @@ import SignupComponent from './components/signup_component';
 import LoginComponent from './components/login_component';
 import ProfileComponent from './components/profile_component';
 import PropertyComponent from './components/property_component';
+import PostPropertyComponent from './components/postProperty_component';
 import AuthService from "./services/auth.service";
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route path="/login" element={<LoginComponent currentUser={currentUser} setCurrentUser={setCurrentUser}/>} />
         <Route path="/profile" element={<ProfileComponent currentUser={currentUser} setCurrentUser={setCurrentUser}/>} />
         <Route path="/property" element={<PropertyComponent currentUser={currentUser} setCurrentUser={setCurrentUser}/>} />
+        <Route path="/postProperty" element={<PostPropertyComponent currentUser={currentUser} setCurrentUser={setCurrentUser}/>} />
       </Routes>
       <FooterComponent />
     </div>

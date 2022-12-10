@@ -19,6 +19,19 @@ router.get("/", (req, res) => {
       });
   });
 
+// get host's own properties
+router.get("/host/:_host_id", (req, res) => {
+  let { _host_id } = req.params;
+  Property.find({ host: _host_id })
+    .populate("host", ["name", "email"])
+    .then((data) => {
+      res.send(data);
+    })
+    .catch(() => {
+      res.status(500).send("Cannot get property data.");
+    });
+});
+
   //get one
 router.get("/:_id", (req, res) => {
 let { _id } = req.params;

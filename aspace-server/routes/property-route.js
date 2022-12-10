@@ -1,0 +1,140 @@
+const router = require("express").Router();
+const Property = require("../models").propertyModel;
+const propertyValidation = require("../validation").propertyValidation;
+
+router.use((req, res, next) => {
+    console.log("A request is coming into api...");
+    next();
+});
+
+//get all
+router.get("/", (req, res) => {
+    Property.find({})
+      .populate("host", ["name", "email"])
+      .then((property) => {
+        res.send(property);
+      })
+      .catch(() => {
+        res.status(500).send("Error!! Cannot get property!!");
+      });
+  });
+
+  //get one
+router.get("/:_id", (req, res) => {
+let { _id } = req.params;
+Property.findOne({ _id })
+    .populate("host", ["email"])
+    .then((property) => {
+    res.send(property);
+    })
+    .catch((e) => {
+    res.send(e);
+    });
+});
+
+// Create
+router.post("/", async (req, res) => {
+    // validate the inputs before making a new course
+    const { error } = propertyValidation(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
+  
+    let { title, type, price, image, city, address, postalCode, description, amenities} = req.body;
+    if (req.user.isGuest()) {
+      return res.status(400).send("Only host can post a new property.");
+    }
+  
+    let newProperty = new Property({
+      host: req.user._id,
+      title,
+      type,
+      price,
+      image,
+      city,
+      address,
+      postalCode,
+      description,
+      amenities,
+    });
+  
+    try {
+      await newProperty.save();
+      res.status(200).send("New property has been saved.");
+    } catch (err) {
+      res.status(400).send("Cannot save property.");
+    }
+  });
+
+// edit property
+router.patch("/:_id", async (req, res) => {
+// validate the inputs before making a new one
+const { error } = propertyValidation(req.body);
+if (error) return res.status(400).send(error.details[0].message);
+
+let { _id } = req.params;
+let property = await Property.findOne({ _id });
+if (!property) {
+    res.status(404);
+    return res.json({
+    success: false,
+    message: "Property not found.",
+    });
+}
+
+if (property.host.equals(req.user._id) || req.user.isAdmin()) {
+    Property.findOneAndUpdate({ _id }, req.body, {
+    new: true,
+    runValidators: true,
+    })
+    .then(() => {
+        res.send("Property updated.");
+    })
+    .catch((e) => {
+        res.send({
+        success: false,
+        message: e,
+        });
+    });
+} else {
+    res.status(403);
+    return res.json({
+    success: false,
+    message:
+        "Only the host of this property or web admin can edit this property.",
+    });
+}
+});
+
+// delete property
+router.delete("/:_id", async (req, res) => {
+    let { _id } = req.params;
+    let property = await Property.findOne({ _id });
+    if (!property) {
+        res.status(404);
+        return res.json({
+        success: false,
+        message: "Property not found.",
+        });
+    }
+
+    if (property.host.equals(req.user._id) || req.user.isAdmin()) {
+        Property.deleteOne({ _id })
+          .then(() => {
+            res.send("Property deleted.");
+        })
+        .catch((e) => {
+            res.send({
+            success: false,
+            message: e,
+            });
+        });
+    } else {
+        res.status(403);
+        return res.json({
+        success: false,
+        message:
+            "Only the host of this property or web admin can delete this property.",
+        });
+    };
+  });
+
+module.exports = router;
